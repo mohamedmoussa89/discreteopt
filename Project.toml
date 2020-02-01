@@ -1,0 +1,4 @@
+name = "discreteopt"
+uuid = "1411142b-b4d6-4f20-8cf1-00e42bcc86c9"
+authors = ["Mohamed Moussa"]
+version = "0.1.0"
