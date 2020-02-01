@@ -2,3 +2,6 @@ name = "discreteopt"
 uuid = "1411142b-b4d6-4f20-8cf1-00e42bcc86c9"
 authors = ["Mohamed Moussa"]
 version = "0.1.0"
+
+[deps]
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"

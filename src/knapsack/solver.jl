@@ -1,5 +1,7 @@
 module Knapsack
 
+using LinearAlgebra
+
 Float = Float64
 
 struct Problem
@@ -9,16 +11,23 @@ struct Problem
   weights::Array{Float ,1}
 end
 
+
 struct Result
   objective::Float
   is_optimal::Bool
-  variables::Array{Int, 1}
+  selections::Array{Int, 1}
+  Result(problem, is_optimal, selections) = new(objective(problem, selections), is_optimal, selections)
 end
 
 
+objective(problem::Problem, selections) = dot(problem.values, selections)
+
+
 include("solver_greedy.jl")
+
+
 solve(problem::Problem) = solver_greedy(problem)
-  
+
 
 function parseinputfile(handle)
   parseint = x -> parse(Int, x)
@@ -50,8 +59,10 @@ function main()
       if problem !== nothing 
         ok = true
         result = solve(problem)
-        display(result)
+        println(result)
       end
+    else
+      println(stderr, "Could not locate input file.")
     end
   end
 
