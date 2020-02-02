@@ -27,6 +27,7 @@ selecteditems(selections) = findall(selections .== 1)
 maximum(solutions::AbstractArray{Solution}) = solutions[argmax([sol.objective for sol in solutions])]
 
 include("solver_greedy.jl")
+include("solver_dynamic.jl")
 
 function readinputfile(file_path)
   problem = nothing
@@ -38,7 +39,8 @@ function readinputfile(file_path)
 
     values = Float[]
     weights = Float[]
-    for line in readlines(fh)
+    for i in 1:n
+      line = readline(fh)    
       (v, w) = split(line) .|> parseint
       push!(values, v)
       push!(weights, w)
@@ -80,10 +82,11 @@ function main()
     results = [
       solver_greedydensity(problem), 
       solver_greedyvalue(problem), 
-      solver_greedyweight(problem)
+      solver_greedyweight(problem),
+      solver_dynamic(problem)
     ]
 
-    solver_types = ["Greedy (D)", "Greedy (V)", "Greedy (W)"]
+    solver_types = ["Greedy (D)", "Greedy (V)", "Greedy (W)", "Dynamic"]
 
     headers = ["Solver", "Objective"]
     objectives = [result.objective for result in results]    
