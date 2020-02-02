@@ -1,6 +1,11 @@
 module Knapsack
 
+using Pkg
+Pkg.activate(".")
+
 using LinearAlgebra
+using PrettyTables
+import Base.maximum
 
 Float = Float64
 
@@ -11,63 +16,82 @@ struct Problem
   weights::Array{Float ,1}
 end
 
-
-struct Result
+struct Solution
   objective::Float
   is_optimal::Bool
   selections::Array{Int, 1}
-  Result(problem, is_optimal, selections) = new(objective(problem, selections), is_optimal, selections)
 end
 
-
 objective(problem::Problem, selections) = dot(problem.values, selections)
-
+selecteditems(selections) = findall(selections .== 1)
+maximum(solutions::AbstractArray{Solution}) = solutions[argmax([sol.objective for sol in solutions])]
 
 include("solver_greedy.jl")
 
-
-solve(problem::Problem) = solver_greedy(problem)
-
-
-function parseinputfile(handle)
-  parseint = x -> parse(Int, x)
-
-  line = readline(handle)
-  (n, K) = split(line) .|> parseint
+function readinputfile(file_path)
+  problem = nothing
   
-  values = Float[]
-  weights = Float[]
-  for line in readlines(handle)
-    (v, w) = split(line) .|> parseint
-    push!(values, v)
-    push!(weights, w)
+  open(file_path) do fh
+    parseint = x -> parse(Int, x)
+    line = readline(fh)
+    (n, K) = split(line) .|> parseint   
+
+    values = Float[]
+    weights = Float[]
+    for line in readlines(fh)
+      (v, w) = split(line) .|> parseint
+      push!(values, v)
+      push!(weights, w)
+    end
+
+    problem = Problem(n, K, values, weights)
   end
 
-  Problem(n, K, values, weights)  
+  return problem
 end
 
-
 function main()
-  ok = false
-
-  if length(ARGS) == 1
-    file_path = ARGS[1]
-    if isfile(file_path)
-      fh = open(file_path)
-      problem = parseinputfile(fh)
-      close(fh)
-      if problem !== nothing 
-        ok = true
-        result = solve(problem)
-        println(result)
+  # Get files from given argument
+  # Arguments can either be a file or directory
+  paths = []
+  for arg in ARGS
+    if isfile(arg)
+      push!(paths, arg)      
+    elseif isdir(arg)
+      for item in readdir(arg)
+        full_path = joinpath(arg, item)
+        if isfile(full_path)
+          push!(paths, full_path)
+        end
       end
-    else
-      println(stderr, "Could not locate input file.")
     end
   end
 
-  if !ok
+  # Solve
+  for file_path in paths
+    println(file_path)
+    
+    problem = readinputfile(file_path)
+    if (problem === nothing)
+      println("Could not read input file")
+      continue
+    end
 
+    results = [
+      solver_greedydensity(problem), 
+      solver_greedyvalue(problem), 
+      solver_greedyweight(problem)
+    ]
+
+    solver_types = ["Greedy (D)", "Greedy (V)", "Greedy (W)"]
+
+    headers = ["Solver", "Objective"]
+    objectives = [result.objective for result in results]    
+    data = hcat(solver_types, objectives)
+    best = argmax(objectives)
+    pretty_table(data, headers)
+    println("Best is $(solver_types[best])")
+    println()
   end
 
 end
