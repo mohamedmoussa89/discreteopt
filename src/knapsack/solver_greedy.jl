@@ -1,23 +1,26 @@
-function solver_greedy(problem::Problem, scores)
-  selections = zeros(Int, problem.item_count)
 
-  # Sort items in order of criteria, largest to smallest
+function solver_greedy(problem::Problem, scores)    
+  @assert length(scores) == itemcount(problem)
+
+  selections = zeros(Int, itemcount(problem))
+
+  # Determine order sorted by score, largest to smallest
   sorted_order = sortperm(scores, rev=true)
-  sorted_items = collect(1:problem.item_count)[sorted_order]  
+  sorted_items = collect(1:itemcount(problem))[sorted_order]  
   
   # Select items with highest score, up to available capacity
   total_weight = 0  
   for item in sorted_items
-    item_weight = problem.weights[item]
-    if (total_weight + item_weight) < problem.capacity
+    item_weight = itemweights(problem)[item]
+    if (total_weight + item_weight) < capacity(problem)
       selections[item] = 1
       total_weight += item_weight
     end
   end
 
-  return Solution(objective(problem, selections), 0, selections)
+  return SolverResult(selections, false)
 end
 
-solver_greedydensity(problem::Problem) = solver_greedy(problem, problem.values ./ problem.weights)
-solver_greedyvalue(problem::Problem) = solver_greedy(problem, problem.values)
-solver_greedyweight(problem::Problem) = solver_greedy(problem, -problem.weights )
+solver_greedydensity(problem::Problem) = solver_greedy(problem, itemvalues(problem) ./ itemweights(problem))
+solver_greedyvalue(problem::Problem) = solver_greedy(problem, itemvalues(problem))
+solver_greedyweight(problem::Problem) = solver_greedy(problem, -itemweights(problem))

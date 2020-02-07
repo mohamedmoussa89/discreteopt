@@ -10,24 +10,30 @@ import Base.maximum
 Float = Float64
 
 struct Problem
-  item_count::Int
   capacity::Int
-  values::Array{Float, 1}
-  weights::Array{Float ,1}
+  values::Array{Int, 1}
+  weights::Array{Int ,1}
 end
 
-struct Solution
-  objective::Float
-  is_optimal::Bool
-  selections::Array{Int, 1}
-end
+capacity(problem::Problem) = problem.capacity
+itemcount(problem::Problem) = length(problem.values)
+itemvalues(problem::Problem) = problem.values
+itemweights(problem::Problem) = problem.weights
 
 objective(problem::Problem, selections) = dot(problem.values, selections)
+totalweight(problem::Problem, selections) = dot(problem.weights, selections)
+validsolution(problem::Problem, selections) = totalweight(problem, selections) <= problem.capacity
+
 selecteditems(selections) = findall(selections .== 1)
-maximum(solutions::AbstractArray{Solution}) = solutions[argmax([sol.objective for sol in solutions])]
+
+struct SolverResult
+  selections::Array{Int, 1}
+  is_optimal::Bool
+end
 
 include("solver_greedy.jl")
 include("solver_dynamic.jl")
+#include("solver_branchbound.jl")
 
 function readinputfile(file_path)
   problem = nothing
@@ -46,7 +52,7 @@ function readinputfile(file_path)
       push!(weights, w)
     end
 
-    problem = Problem(n, K, values, weights)
+    problem = Problem(K, values, weights)
   end
 
   return problem
@@ -82,18 +88,18 @@ function main()
     results = [
       solver_greedydensity(problem), 
       solver_greedyvalue(problem), 
-      solver_greedyweight(problem),
-      solver_dynamic(problem)
+      solver_greedyweight(problem), 
+      solver_dynamic(problem),
     ]
 
-    solver_types = ["Greedy (D)", "Greedy (V)", "Greedy (W)", "Dynamic"]
-
+    solver_types = ["Greedy (D)", "Greedy (V)", "Greedy (W)", "Dynamic", "Branch"]    
     headers = ["Solver", "Objective"]
-    objectives = [result.objective for result in results]    
-    data = hcat(solver_types, objectives)
+    selections = [result.selections for result in results]    
+    objectives = [objective(problem, sel) for sel in selections]
+    order = sortperm(objectives, rev=true)
+    data = hcat(solver_types[order], objectives[order])
     best = argmax(objectives)
-    pretty_table(data, headers)
-    println("Best is $(solver_types[best])")
+    pretty_table(data, headers)    
     println()
   end
 
