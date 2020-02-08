@@ -2,7 +2,7 @@
 function solver_greedy(problem::Problem, scores)    
   @assert length(scores) == itemcount(problem)
 
-  selections = zeros(Int, itemcount(problem))
+  selections = falses(itemcount(problem))
 
   # Determine order sorted by score, largest to smallest
   sorted_order = sortperm(scores, rev=true)

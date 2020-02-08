@@ -37,7 +37,7 @@ function solver_dynamic(problem::Problem)
   
   # Start 
   N = itemcount(problem)
-  @time opt = optimal(capacity(problem), N)  
+  opt = optimal(capacity(problem), N)  
 
   # Determine selections  
   K = capacity(problem)

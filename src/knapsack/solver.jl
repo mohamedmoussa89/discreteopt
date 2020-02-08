@@ -1,9 +1,7 @@
 module Knapsack
 
-using Pkg
-Pkg.activate(".")
-
 using LinearAlgebra
+using DataStructures
 using PrettyTables
 import Base.maximum
 
@@ -22,18 +20,18 @@ itemweights(problem::Problem) = problem.weights
 
 objective(problem::Problem, selections) = dot(problem.values, selections)
 totalweight(problem::Problem, selections) = dot(problem.weights, selections)
-validsolution(problem::Problem, selections) = totalweight(problem, selections) <= problem.capacity
+validsolution(problem::Problem, selections) = totalweight(problem, selections) <= capacity(problem)
 
 selecteditems(selections) = findall(selections .== 1)
 
 struct SolverResult
-  selections::Array{Int, 1}
+  selections::BitArray{1}
   is_optimal::Bool
 end
 
 include("solver_greedy.jl")
 include("solver_dynamic.jl")
-#include("solver_branchbound.jl")
+include("solver_branchbound.jl")
 
 function readinputfile(file_path)
   problem = nothing
@@ -61,22 +59,22 @@ end
 function main()
   # Get files from given argument
   # Arguments can either be a file or directory
-  paths = []
-  for arg in ARGS
-    if isfile(arg)
-      push!(paths, arg)      
-    elseif isdir(arg)
-      for item in readdir(arg)
-        full_path = joinpath(arg, item)
-        if isfile(full_path)
-          push!(paths, full_path)
-        end
-      end
-    end
-  end
+  paths = ["./data/knapsack/ks_4_0"]
+  # for arg in ARGS
+  #   if isfile(arg)
+  #     push!(paths, arg)      
+  #   elseif isdir(arg)
+  #     for item in readdir(arg)
+  #       full_path = joinpath(arg, item)
+  #       if isfile(full_path)
+  #         push!(paths, full_path)
+  #       end
+  #     end
+  #   end
+  # end
 
   # Solve
-  for file_path in paths
+  for file_path in paths    
     println(file_path)
     
     problem = readinputfile(file_path)
@@ -85,14 +83,16 @@ function main()
       continue
     end
 
+    res_bb = solver_branchbound(problem)
+
     results = [
       solver_greedydensity(problem), 
       solver_greedyvalue(problem), 
       solver_greedyweight(problem), 
-      solver_dynamic(problem),
+      res_bb,
     ]
 
-    solver_types = ["Greedy (D)", "Greedy (V)", "Greedy (W)", "Dynamic", "Branch"]    
+    solver_types = ["Greedy (D)", "Greedy (V)", "Greedy (W)", "Branch", "Dynamic"]    
     headers = ["Solver", "Objective"]
     selections = [result.selections for result in results]    
     objectives = [objective(problem, sel) for sel in selections]
