@@ -1,5 +1,8 @@
 module Knapsack
 
+#using Pkg
+#Pkg.activate(".")
+
 using LinearAlgebra
 using DataStructures
 using PrettyTables
@@ -59,48 +62,59 @@ end
 function main()
   # Get files from given argument
   # Arguments can either be a file or directory
-  paths = ["./data/knapsack/ks_4_0"]
-  # for arg in ARGS
-  #   if isfile(arg)
-  #     push!(paths, arg)      
-  #   elseif isdir(arg)
-  #     for item in readdir(arg)
-  #       full_path = joinpath(arg, item)
-  #       if isfile(full_path)
-  #         push!(paths, full_path)
-  #       end
-  #     end
-  #   end
-  # end
+  paths = []
+  for arg in ARGS
+    if isfile(arg)
+      push!(paths, arg)      
+    elseif isdir(arg)
+      for item in readdir(arg)
+        full_path = joinpath(arg, item)
+        if isfile(full_path)
+          push!(paths, full_path)
+        end
+      end
+    end
+  end
+
+  #root = "./data/knapsack/"
+  #paths = readdir(root)
+  #paths = [joinpath(root, p) for p in paths]
+
+  #paths = ["./data/knapsack/ks_1000_0"]
 
   # Solve
   for file_path in paths    
-    println(file_path)
-    
+   
     problem = readinputfile(file_path)
     if (problem === nothing)
       println("Could not read input file")
       continue
     end
 
-    res_bb = solver_branchbound(problem)
+    # results = [
+    #   solver_greedydensity(problem), 
+    #   solver_greedyvalue(problem), 
+    #   solver_greedyweight(problem), 
+    #   solver_branchbound(problem),
+    # ]
 
-    results = [
-      solver_greedydensity(problem), 
-      solver_greedyvalue(problem), 
-      solver_greedyweight(problem), 
-      res_bb,
-    ]
+    # solver_types = ["Greedy (D)", "Greedy (V)", "Greedy (W)", "Branch"]    
+    # headers = ["Solver", "Objective", "Valid"]
+    # selections = [result.selections for result in results]    
+    # objectives = [objective(problem, sel) for sel in selections]
+    # checks = [totalweight(problem, sel) <= capacity(problem) for sel in selections]
+    # order = sortperm(objectives, rev=true)
+    # data = hcat(solver_types[order], objectives[order], checks[order])
+    # best = argmax(objectives)
+    # pretty_table(data, headers)    
 
-    solver_types = ["Greedy (D)", "Greedy (V)", "Greedy (W)", "Branch", "Dynamic"]    
-    headers = ["Solver", "Objective"]
-    selections = [result.selections for result in results]    
-    objectives = [objective(problem, sel) for sel in selections]
-    order = sortperm(objectives, rev=true)
-    data = hcat(solver_types[order], objectives[order])
-    best = argmax(objectives)
-    pretty_table(data, headers)    
-    println()
+    result = solver_branchbound(problem)    
+    obj = objective(problem, result.selections)
+    is_opt = result.is_optimal ? 1 : 0
+    selections = join([s ? 1 : 0 for s in result.selections], " ")
+    println("$(obj) $(is_opt)")    
+    println(selections)
+
   end
 
 end
